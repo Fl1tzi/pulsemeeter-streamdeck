@@ -13,9 +13,11 @@ Then download all the files:
 
 `git clone https://github.com/Fl1tzi/pulsemeeter-streamdeck.git`
 
-Then go into the directory `pulsemeeter-streamdeck` and execute it using 
+Finally go into the directory `pulsemeeter-streamdeck` and execute it using: 
 
 `python3 __main__.py`
+
+---
 
 **If it gives you an error that it couldn't open the device, you should add the udev rules.**
 
