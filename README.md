@@ -5,9 +5,9 @@ pulsemeeter cli example on streamdeck
 
 # installation
 first install the dependencies using:
-`pip3 install streamdeck`
 
-`pip3 install pulsemeeter`
+- `pip3 install streamdeck`
+- `pip3 install pulsemeeter`
 
 Then download all the files and go into their directory.
 
