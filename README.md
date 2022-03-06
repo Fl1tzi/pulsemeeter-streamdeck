@@ -12,8 +12,11 @@ Then download all the files and go into their directory.
 Finally just execute it using `python3 __main__.py`
 
 **If it gives you an error that it couldn't open the device, you should add the udev rules.**
+
 `sudo cp 10-streamdeck.rules /etc/udev/rules.d`
+
 Reload the rules:
+
 `sudo udevadm trigger`
 
 # usage
