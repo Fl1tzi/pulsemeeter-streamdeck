@@ -9,9 +9,13 @@ first install the dependencies using:
 - `pip3 install streamdeck`
 - `pip3 install pulsemeeter`
 
-Then download all the files and go into their directory.
+Then download all the files:
 
-Finally just execute it using `python3 __main__.py`
+`git clone https://github.com/Fl1tzi/pulsemeeter-streamdeck.git`
+
+Then go into the directory `pulsemeeter-streamdeck` and execute it using 
+
+`python3 __main__.py`
 
 **If it gives you an error that it couldn't open the device, you should add the udev rules.**
 
