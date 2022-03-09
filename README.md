@@ -1,5 +1,5 @@
 # pulsemeeter-streamdeck
-pulsemeeter cli example on streamdeck
+Elgato Streamdeck intergration into pulsemeeter with pulsemeeter socket.
 
 **This application uses a beta version of pulsemeeter so it is not available with the current version**
 
@@ -16,6 +16,7 @@ Then download all the files:
 Finally go into the directory `pulsemeeter-streamdeck` and execute it using: 
 
 `python3 __main__.py`
+
 
 ---
 

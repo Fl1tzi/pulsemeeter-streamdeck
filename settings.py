@@ -1,9 +1,11 @@
 import os
+import re
+import sys
 
 # Folder location of image assets used 
 ASSETS_PATH = os.path.join(os.path.dirname(__file__), "Assets")
 # higher cpu usage but faster data loading
-use_multiprocessing = True
+use_multiprocessing = False
 check_running = True
 
 # ----------------------------------------------------------------
@@ -17,19 +19,18 @@ brightness = 30
 # show the volume step on the keys
 show_volume_step = False
 # show the device name on the device page
-show_device = False
+show_device = True
 
-# [device], [(mic|speaker)], [label], [internal info (do not change)]
-# just set the device to None to disable it
-# example:
-# device_1 = None
-# it also supports \n for labels
+# device: device type (hi|vi|a|b)
+# device_id: device id (probably 1-3)
+# label: what should be showed on the key (also supports \n for labels)
+# type: what icon to use (mic or speaker)
 
-device_1 = ['hi1', 'mic', 'LABEL', 'one']
-device_2 = ['vi2', 'speaker', 'LABEL2', 'two']
-device_3 = ['vi1', 'speaker', 'LABEL3', 'three']
-device_4 = ['a1', 'speaker', 'LABEL4', 'four']
-device_5 = ['b1', 'mic', 'LABEL5', 'five']
+device_1 = ['hi', 1, 'Hi1', 'mic']
+device_2 = ['vi', 1, 'Vi1', 'speaker']
+device_3 = ['vi', 2, 'Vi2', 'speaker']
+device_4 = ['a', 1, 'out', 'speaker']
+device_5 = ['b', 1, 'mic', 'mic']
 
 # the seperator used between the volume and your label (can also be \n)
 label_seperator = "-"
@@ -40,5 +41,8 @@ margins = [25, 0, 10, 0]
 # font used in examples:
 # font = "JetBrains_Mono_Medium_Nerd_Font_Complete.ttf"
 font = "Roboto-Regular.ttf"
-
 font_size = 12
+
+# faq
+# how can I change the icon:
+# currently you look into the assets folder and put a file in there and replace it with a current one
