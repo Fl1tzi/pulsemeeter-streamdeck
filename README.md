@@ -8,6 +8,7 @@ first install the dependencies using:
 
 - `pip3 install streamdeck`
 - `pip3 install pulsemeeter`
+- `pip3 install Pillow` 
 
 Then download all the files:
 
