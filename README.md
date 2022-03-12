@@ -1,7 +1,7 @@
 # pulsemeeter-streamdeck
 Elgato Streamdeck intergration into pulsemeeter with pulsemeeter socket.
 
-**This application uses a beta version of pulsemeeter so it is not available with the current version**
+**only available if your Pulsemeeter version is over 1.2.12**
 
 # installation
 first install the dependencies using:

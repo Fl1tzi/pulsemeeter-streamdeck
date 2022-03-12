@@ -6,6 +6,7 @@ import threading
 import sys
 from time import sleep
 import re
+import math
 
 from PIL import Image, ImageDraw, ImageFont
 from StreamDeck.DeviceManager import DeviceManager
@@ -14,17 +15,54 @@ from StreamDeck.ImageHelpers import PILHelper
 import settings
 from pulsemeeter import socket
 
-device_1 = settings.device_1
-device_2 = settings.device_2
-device_3 = settings.device_3
-device_4 = settings.device_4
-device_5 = settings.device_5
-
 volume_step = settings.volume_step
 label_seperator = settings.label_seperator
 margins = settings.margins
 
 def init_settings():
+    try:
+        global device_1
+        global device_2
+        global device_3
+        global device_4
+        global device_5
+        device_1 = settings.device_1
+        device_2 = settings.device_2
+        device_3 = settings.device_3
+        device_4 = settings.device_4
+        device_5 = settings.device_5
+    except:
+        print(f'Could not find all devices in settings (5 devices needed).')
+        print('---')
+        client.close_connection()
+        sys.exit(1)
+
+    a = range(1,6)
+    for num in a:
+        try:
+            device = eval(f'device_{num}')
+            if type(device) != list:
+                print(f'device_{num} is invalid. It is not a list.')
+            if len(device) != 4:
+                print(f'device_{num} is invalid. It needs 4 values')
+                raise
+            if device[0] not in ['hi', 'vi', 'a', 'b']:
+                print(f'device_{num} (first value) is invalid. It has to be one of these: hi/vi/a/b')
+                raise
+            if type(device[2]) != str:
+                print(f'device_{num} (third value) is invalid. It needs to be a string.')
+                raise
+            if type(device[3]) != str or device[3].lower() not in ['mic', 'speaker']:
+                print(f'device_{num} (fourth value) is invalid. It needs to be a string which has to be one of these: mic/speaker')
+                raise
+        except:
+            print(f'error in device_{num}')
+            print('---')
+            client.close_connection()
+            sys.exit(1)
+    
+
+
     device_1.append('one')
     device_2.append('two')
     device_3.append('three')
@@ -59,9 +97,8 @@ def render_key_image(deck, icon_filename, font_filename, label_text):
 
 def get_volume(device):
     # print('getting volume')
-    if device != None:
-        val = client.config[device[0]][device[1]]['vol']
-        return int(val)
+    val = client.config[device[0]][device[1]]['vol']
+    return int(val)
 
 def get_mute(device):
     # print('getting mute')
@@ -93,7 +130,7 @@ def get_connect(device, device2):
 # get the picture for the speaker
 def get_speaker_pic(device):
     state = get_mute(device)
-    device_type = device[3]
+    device_type = device[3].lower()
     if state == True:
         if device_type == 'mic':
             return "mic-off-line.png"
@@ -376,14 +413,40 @@ def update_key_image(deck, key):
         deck.set_key_image(key, image)
         # print(f'updating key {key}')
 
+def round_volume(device, vol, rem, val_type='+'):
+    print('rounding')
+    if val_type == '-':
+        return vol-rem
+    else:
+        return vol+(10-rem)
+
 def check_volume_keys(deck, key_style, device):
     if key_style["name"] == f"{device[4]}+":
         print(f'{device[0:2]} +')
-        client.volume(device[0], device[1], f'+{volume_step}')
+        if settings.round_volume:
+            vol = get_volume(device)
+            rem = vol % 10
+            if rem == 0:
+                set_vol = f'+{volume_step}'
+            else:
+                set_vol = round_volume(device, vol, rem, '+')
+        else:
+            set_vol = f'+{volume_step}'
+        client.volume(device[0], device[1], set_vol)
         update_key_image(deck, eval(f'{device[4]}_base'))
     elif key_style["name"] == f"{device[4]}-":
         print(f'{device[0:2]} -')
-        client.volume(device[0], device[1], f'-{volume_step}')
+        if settings.round_volume:
+            vol = get_volume(device)
+            rem = vol % 10
+            print(rem)
+            if rem == 0:
+                set_vol = f'-{volume_step}'
+            else:
+                set_vol = round_volume(device, vol, rem, '-')
+        else:
+            set_vol = f'-{volume_step}'
+        client.volume(device[0], device[1], set_vol)
         update_key_image(deck, eval(f"{device[4]}_base"))
     elif key_style["name"] == f"{device[4]}":
         change_page(deck, "sub-menu", device[4])
@@ -468,9 +531,12 @@ if __name__ == "__main__":
         print('connection failed')
         sys.exit(1)
     print('connected')
-
+ 
+    print('---')
+    print('checking settings\n')
     init_settings()
-
+    print('settings ready')
+    print('---')
 
     for index, deck in enumerate(streamdecks):
         deck.open()
@@ -519,6 +585,7 @@ if __name__ == "__main__":
 
         global curr_device
         curr_device = None
+
 
         listen_socket()
 

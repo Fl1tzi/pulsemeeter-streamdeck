@@ -4,8 +4,6 @@ import sys
 
 # Folder location of image assets used 
 ASSETS_PATH = os.path.join(os.path.dirname(__file__), "Assets")
-# higher cpu usage but faster data loading
-use_multiprocessing = False
 check_running = True
 
 # ----------------------------------------------------------------
@@ -13,6 +11,8 @@ check_running = True
 
 # how much to increase or decrease the gain
 volume_step = 10
+# round your volume to 10th (could not work properly if using other volume_step as 10)
+round_volume = True
 # the brightness of the streamdeck
 brightness = 30
 
@@ -26,6 +26,7 @@ show_device = True
 # label: what should be showed on the key (also supports \n for labels)
 # type: what icon to use (mic or speaker)
 
+# (device) (device_id) (label) (type)
 device_1 = ['hi', 1, 'Hi1', 'mic']
 device_2 = ['vi', 1, 'Vi1', 'speaker']
 device_3 = ['vi', 2, 'Vi2', 'speaker']
