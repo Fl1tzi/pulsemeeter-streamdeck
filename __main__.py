@@ -16,7 +16,6 @@ import settings
 from pulsemeeter import socket
 
 volume_step = settings.volume_step
-label_seperator = settings.label_seperator
 margins = settings.margins
 
 def init_settings():
@@ -61,23 +60,30 @@ def init_settings():
             client.close_connection()
             sys.exit(1)
     
+    device_1.append(1)
+    device_2.append(2)
+    device_3.append(3)
+    device_4.append(4)
+    device_5.append(5)
 
-
-    device_1.append('one')
-    device_2.append('two')
-    device_3.append('three')
-    device_4.append('four')
-    device_5.append('five')
+    global can_round_volume
+    if volume_step in [5, 10]: can_round_volume = True
+    else: can_round_volume = False
 
     for i in [device_1, device_2, device_3, device_4, device_5]:
         if type(i[1]) == int:
             i[1] = str(i[1])
 
-
+# \033[91m
+# \033[0m
 # Generates a custom tile with run-time generated text and custom image via the
 # PIL module.
-def render_key_image(deck, icon_filename, font_filename, label_text):
+def render_key_image(deck, icon_filename, font_filename, label_text, name, text_color):
     icon = Image.open(icon_filename)
+    if name in ['1', '2', '3', '4', '5'] and curr_site == 'main':
+        margins = settings.title_margin
+    else:
+        margins = settings.margins
     image = PILHelper.create_scaled_image(deck, icon, margins=margins)
 
     # Load a custom TrueType font and use it to overlay the key index, draw key
@@ -88,7 +94,12 @@ def render_key_image(deck, icon_filename, font_filename, label_text):
     except:
         print('the font you selected is not available in the Assets folder')
         sys.exit(1)
-    draw.text((image.width / 2, image.height - 55), text=label_text, font=font, anchor="ms", fill="white")
+    
+    if text_color != None:
+        fill = text_color
+    else:
+        fill = settings.text_color
+    draw.text((image.width / 2, image.height - 55), text=label_text, font=font, anchor="ms", fill=fill)
 
     return PILHelper.to_native_format(deck, image)
 
@@ -103,33 +114,39 @@ def get_volume(device):
 def get_mute(device):
     # print('getting mute')
     val = client.config[device[0]][device[1]]['mute']
-    return val
+    return str2bool(val)
 
 def get_eq(device):
     # print('getting eq')
     val = client.config[device[0]][device[1]]['use_eq']
-    return val
+    return str2bool(val)
 
 def get_rnnoise(device):
     # print('getting rnnoise')
     val = client.config[device[0]][device[1]]['use_rnnoise']
-    return val
+    return str2bool(val)
 
 def get_primary(device):
     # print('getting primary')
     val = client.config[device[0]][device[1]]['primary']
-    return val
+    return str2bool(val)
 
 def get_connect(device, device2):
     val = client.config[device[0]][device[1]][device2]
-    return val
+    return str2bool(val)
 
 # ------------------------------
 # ICON GENERATORS
 
+def str2bool(value):
+    if type(value) == bool:
+        return value
+    else:
+        if value in ['True', 'true']: return True
+        elif value in ['False', 'false']: return False
+
 # get the picture for the speaker
-def get_speaker_pic(device):
-    state = get_mute(device)
+def get_speaker_pic(device, state):
     device_type = device[3].lower()
     if state == True:
         if device_type == 'mic':
@@ -161,14 +178,26 @@ def get_device_from_label(label):
         if dev[4] == label:
             return dev
 
+def get_text_mute_icon(device, state):
+    if device[3].lower() == 'mic':
+        if state == True: return settings.mute_mic[1]
+        else: return settings.mute_mic[0]
+    elif device[3].lower() == 'speaker':
+        if state == True: return settings.mute_speaker[1]
+        else: return settings.mute_speaker[0]
+    else:
+        return ''
+
+        
+
 # -------------------------------
 # LAYOUT
 
 # Returns styling information for a key based on its position and state.
-def get_current_key_style(deck, key):
+def get_current_key_style(deck, key, value=None):
     menu = curr_site
 
-    if key not in get_used_keys():
+    if key in get_unused_keys():
         name = "None"
         icon = "Empty.png"
         label = ''
@@ -182,36 +211,45 @@ def get_current_key_style(deck, key):
     | one_base  | two_base  | three_base  | four_base  | five_base |
     '''
     dev = None
+    text_color = None
 
     if menu == "main":
         devices = get_devices()
         for device in devices:
             try:
-                device_name = device[4]
+                device_group = device[4]
                 device_label = device[2]
 
-                if key == eval(f'{device_name}_up'):
-                    name = f"{device_name}+"
+                if key == eval(f'key{device_group}_up'):
+                    name = f"{device_group}+"
                     icon = "volume-up-line.png"
                     if settings.show_volume_step:
                         label = "+ "+str(volume_step)
                     else:
                         label = "+"
 
-                elif key == eval(f'{device_name}_down'):
-                    name = f"{device_name}-"
+                elif key == eval(f'key{device_group}_down'):
+                    name = f"{device_group}-"
                     icon = "volume-down-line.png"
                     if settings.show_volume_step:
                         label = "- "+str(volume_step)
                     else:
                         label = "-"
 
-                elif key == eval(f'{device_name}_base'):
-                    name = f'{device_name}'
+                elif key == eval(f'key{device_group}_base'):
+                    name = f'{device_group}'
+                    ismuted = get_mute(device)
                     icon = "sound-module-fill.png"
-                    #device_type = device[1]
-                    #icon = get_speaker_pic(device[0], device_type)
-                    label = f"{get_volume(device)}{label_seperator}{device_label}"
+                    if settings.show_mute_state_text_icon:
+                        mute_icon = get_text_mute_icon(device, ismuted)+' '
+                    else:
+                        mute_icon = ''
+                    if ismuted == True and settings.show_mute_state_color == True:
+                        text_color = settings.inactive_text_color
+                    if value is None:
+                        label = f"{mute_icon}{get_volume(device)}{settings.label_seperator}{device_label}"
+                    else:
+                        label = f"{mute_icon}{value}{settings.label_seperator}{device_label}"
             except:
                 name = ""
                 icon = "Empty.png"
@@ -222,14 +260,14 @@ def get_current_key_style(deck, key):
         dev = get_device_from_label(curr_device)
         # print(dev[0:2])
 
-        if key == one_base:
-            name = device_1[4]
+        if key == key1_base:
+            name = str(device_1[4])
             icon = "close-line.png"
             label = "close"
         # RNNOISE
-        elif key == one_down:
+        elif key == key1_down:
             if re.match('^(hi)+', dev[0]):
-                name = device_1[4]+"-"
+                name = str(device_1[4])+"-"
                 icon = get_button_pic(get_rnnoise(dev))
                 label = "rnnoise"
             else:
@@ -237,29 +275,35 @@ def get_current_key_style(deck, key):
                 icon = "Empty.png"
                 label = ""
         # MUTE
-        elif key == one_up:
-            name = device_1[4]+"+"
-            icon = get_speaker_pic(dev)
+        elif key == key1_up:
+            name = str(device_1[4])+"+"
+            if value != None:
+                icon = get_speaker_pic(dev, value)
+            else:
+                icon = get_speaker_pic(dev, get_mute(dev))
             label = "mute"
-        if key == two_base:
-            name = device_2[4]
+        elif key == key2_base:
+            name = str(device_2[4])
             icon = "Empty.png"
             label = ""
-        elif key == two_down:
-            name = device_2[4]+"-"
+        elif key == key2_down:
+            name = str(device_2[4])+"-"
             icon = "Empty.png"
             label = ""
         # EQ
-        elif key == two_up:
+        elif key == key2_up:
             if re.match('^(a|b)+', dev[0]):
-                name = device_2[4]+"+"
-                icon = get_button_pic(get_eq(dev))
+                name = str(device_2[4])+"+"
+                if value != None:
+                    icon = get_button_pic(value)
+                else:
+                    icon = get_button_pic(get_eq(dev))
                 label = "EQ"
             else:
                 name = ""
                 icon = "Empty.png"
                 label = ""
-        elif key == three_base:
+        elif key == key3_base:
             name = device_3[4]
             icon = "Empty.png"
             label = ""
@@ -268,15 +312,19 @@ def get_current_key_style(deck, key):
                 label = f"Device:\n{dev[0].upper()} {dev[1]}"
             else:
                 label = ""
-        elif key == three_down:
-            name = device_3[4]+"-"
+        elif key == key3_down:
+            name = str(device_3[4])+"-"
             icon = "Empty.png"
             label = ""
         # PRIMARY
-        elif key == three_up:
+        elif key == key3_up:
             if re.match('^(b|vi)+', dev[0]):
-                name = device_3[4]+"+"
-                icon = get_button_pic(get_primary(dev))
+                name = str(device_3[4])+"+"
+                if value != None:
+                    print('using value')
+                    icon = get_button_pic(value)
+                else:
+                    icon = get_button_pic(get_primary(dev))
                 label = "primary"
             else:
                 icon = "Empty.png"
@@ -288,61 +336,29 @@ def get_current_key_style(deck, key):
                 connection_allowed = True
             else:
                 connection_allowed = False
+            
+            buttons = {'key4_base': ['4', 'a1'], 'key4_down': ['4', 'a2'], 'key4_up': ['4', 'a3'],
+                    'key5_base': ['5', 'b1'], 'key5_down': ['5', 'b2'], 'key5_up': ['5', 'b3']}
+            
+            if connection_allowed:
+                for dict_name, variables in buttons.items():
+                    if key == eval(dict_name):
+                        val = dict_name.split('_')
+                        if val[-1]== 'base': val = ''
+                        elif val[-1] == 'up': val = '+'
+                        elif val[-1] == 'down': val = '-'
+                        name = f'{str(eval(f"device_{variables[0]}")[4])}{val}'
+                        if value != None:
+                            icon = get_checkbox_pic(value)
+                        else:
+                            icon = get_checkbox_pic(get_connect(dev, variables[1]))
+                        label = variables[1].upper()
+                        break
+            else:
+                name = ""
+                icon = "Empty.png"
+                label = ""
 
-            if key == four_base:
-                if connection_allowed:
-                    name = device_4[4]
-                    icon = get_checkbox_pic(get_connect(dev, 'a1'))
-                    label = "A1"
-                else:
-                    name = ""
-                    icon = "Empty.png"
-                    label = ""
-            elif key == four_down:
-                if connection_allowed:
-                    name = device_4[4]+"-"
-                    icon = get_checkbox_pic(get_connect(dev, 'a2'))
-                    label = "A2"
-                else:
-                    name = ""
-                    icon = "Empty.png"
-                    label = ""
-            elif key == four_up:
-                if connection_allowed:
-                    name = device_4[4]+"+"
-                    icon = get_checkbox_pic(get_connect(dev, 'a3'))
-                    label = "A3"
-                else:
-                    name = ""
-                    icon = "Empty.png"
-                    label = ""
-            elif key == five_base:
-                if connection_allowed:
-                    name = device_5[4]
-                    icon = get_checkbox_pic(get_connect(dev, 'b1'))
-                    label = "B1"
-                else:
-                    name = ""
-                    icon = "Empty.png"
-                    label = ""
-            elif key == five_down:
-                if connection_allowed:
-                    name = device_5[4]+"-"
-                    icon = get_checkbox_pic(get_connect(dev, 'b2'))
-                    label = "B2"
-                else:
-                    name = ""
-                    icon = "Empty.png"
-                    label = ""
-            elif key == five_up:
-                if connection_allowed:
-                    name = device_5[4]+"+"
-                    icon = get_checkbox_pic(get_connect(dev, 'b3'))
-                    label = "B3"
-                else:
-                    name = ""
-                    icon = "Empty.png"
-                    label = ""
     return {
         "name": name,
         "icon": os.path.join(settings.ASSETS_PATH, icon),
@@ -350,6 +366,7 @@ def get_current_key_style(deck, key):
         "label": label,
         "menu": menu,
         "device": dev, 
+        "text_color": text_color
     }
 
 # ----------------------------------------------------------------
@@ -361,25 +378,32 @@ def match_device(device_type, device_id):
             return device[4]
 
 def update_volume_keys(device_type, device_id, val):
-    update_key_image(deck, eval(f'{match_device(device_type, device_id)}_base'))
+    print('callback volume')
+    update_key_image(deck, eval(f'key{match_device(device_type, device_id)}_base'), val)
 
 def update_mute_button(device_type, device_id, state):
-    update_key_image(deck, one_up)
+    print('callback volume')
+    update_key_image(deck, key1_up, str2bool(state))
 
 def update_connection_buttons(input_type, input_id, output_type, output_id, state, latency):
-    # just update the specific row because I think it won't make a much difference
+    print('callback connection')
+    state = str2bool(state)
     if output_type == 'a':
-        for key in [four_base, four_down, four_up]:
-            update_key_image(deck, key)
+        if output_id == 1: update_key_image(deck, key4_base, state)
+        elif output_id == 2: update_key_image(deck, key4_down, state)
+        elif output_id == 3: update_key_image(deck, key4_up, state)
     elif output_type == 'b':
-        for key in [five_base, five_down, five_up]:
-            update_key_image(deck, key)
+        if output_id == 1: update_key_image(deck, key5_base, state)
+        elif output_id == 2: update_key_image(deck, key5_down, state)
+        elif output_id == 3: update_key_image(deck, key5_up, state)
 
 def update_primary_button(device_type, device_id):
-    update_key_image(deck, three_up)
+    print('callback primary')
+    update_key_image(deck, key3_up)
 
 def listen_socket():
     if curr_site == 'main':
+        print('main')
         client.set_callback_function('volume', update_volume_keys)
     elif curr_site == 'sub-menu':
         client.set_callback_function('mute', update_mute_button)
@@ -393,18 +417,23 @@ def change_page(deck, page, device=None):
     curr_site = page
     global curr_device
     curr_device = device
-    for i in a:
-        update_key_image(deck, i)
+    update_keys = range(deck.key_count())
+    for key in update_keys:
+        update_key_image(deck, key)
+    print('---')
     listen_socket()
     print(f'changed page to {curr_site} ({curr_device})')
 
 # UPDATE SPECIFIC KEY
-def update_key_image(deck, key):
+def update_key_image(deck, key, value=None):
     # Determine what icon and label to use on the generated key.
-    key_style = get_current_key_style(deck, key)
+    if value == None:
+        key_style = get_current_key_style(deck, key)
+    else:
+        key_style = get_current_key_style(deck, key, value)
 
     # Generate the custom key with the requested image and label.
-    image = render_key_image(deck, key_style["icon"], key_style["font"], key_style["label"])
+    image = render_key_image(deck, key_style["icon"], key_style["font"], key_style["label"], key_style["name"], key_style["text_color"])
 
     # Use a scoped-with on the deck to ensure we're the only thread using it
     # right now.
@@ -413,41 +442,41 @@ def update_key_image(deck, key):
         deck.set_key_image(key, image)
         # print(f'updating key {key}')
 
-def round_volume(device, vol, rem, val_type='+'):
-    print('rounding')
-    if val_type == '-':
-        return vol-rem
+def round_volume(device, vol, val_type='+'):
+    vol = get_volume(device)
+    if volume_step == 10: allowed = [0]
+    elif volume_step == 5: allowed = [0, 5]
+
+    rem = vol % volume_step
+    if rem in allowed:
+        return f'{val_type}{volume_step}'
     else:
-        return vol+(10-rem)
+        if val_type == '-':
+            return vol-rem
+        else:
+            return vol+(volume_step-rem)
 
 def check_volume_keys(deck, key_style, device):
     if key_style["name"] == f"{device[4]}+":
-        print(f'{device[0:2]} +')
-        if settings.round_volume:
+        print(f'{device[0] + device[1]} +')
+        if settings.round_volume and can_round_volume:
             vol = get_volume(device)
-            rem = vol % 10
-            if rem == 0:
-                set_vol = f'+{volume_step}'
-            else:
-                set_vol = round_volume(device, vol, rem, '+')
+            set_vol = round_volume(device, vol, '+')
         else:
             set_vol = f'+{volume_step}'
-        client.volume(device[0], device[1], set_vol)
-        update_key_image(deck, eval(f'{device[4]}_base'))
+        server_return = client.volume(device[0], device[1], set_vol)
+        server_return = server_return.split(' ')
+        update_key_image(deck, eval(f'key{device[4]}_base'), server_return[-1])
     elif key_style["name"] == f"{device[4]}-":
-        print(f'{device[0:2]} -')
-        if settings.round_volume:
+        print(f'{device[0] + device[1]} -')
+        if settings.round_volume and can_round_volume:
             vol = get_volume(device)
-            rem = vol % 10
-            print(rem)
-            if rem == 0:
-                set_vol = f'-{volume_step}'
-            else:
-                set_vol = round_volume(device, vol, rem, '-')
+            set_vol = round_volume(device, vol, '-')
         else:
             set_vol = f'-{volume_step}'
-        client.volume(device[0], device[1], set_vol)
-        update_key_image(deck, eval(f"{device[4]}_base"))
+        server_return = client.volume(device[0], device[1], set_vol)
+        server_return = server_return.split(' ')
+        update_key_image(deck, eval(f"key{device[4]}_base"), server_return[-1])
     elif key_style["name"] == f"{device[4]}":
         change_page(deck, "sub-menu", device[4])
 
@@ -455,7 +484,7 @@ def check_volume_keys(deck, key_style, device):
 # KEY CALLBACK (when a key is presed)
 def key_change_callback(deck, key, state):
     # Print new key state
-    print("Deck {} Key {} = {}".format(deck.id(), key, state), flush=True)
+    # print("Deck {} Key {} = {}".format(deck.id(), key, state), flush=True)
 
     update_key_image(deck, key)
 
@@ -474,38 +503,43 @@ def key_change_callback(deck, key, state):
                 # Close deck handle, terminating internal worker threads.
                 deck.close()
         elif key_style["menu"] == "sub-menu":
-            if key_style["name"] == "one":
+            if key_style["name"] == "1":
                 change_page(deck, "main")
-            elif key_style["name"] == "one+":
+
+            elif key_style["name"] == "1+":
                 device = key_style["device"]
-                client.mute(device[0], device[1])
-                print(f'{key_style["device"][0:2]} mute toggled')
-            elif key_style["name"] == "two+":
+                server_return = client.mute(device[0], device[1])
+                print(f'{device[0]}{device[1]} mute')
+
+            elif key_style["name"] == "2+":
                 device = key_style["device"]
                 client.eq(device[0], device[1])
-                print(f'toggle eq ({device[0:2]})')
-            elif key_style["name"] == "one-":
+                print(f'{device[0]}{device[1]} eq')
+
+            elif key_style["name"] == "1-":
                 device = key_style["device"]
-                print(f'toggle rnnoise {device[0:2]}')
                 client.rnnoise(device[0], device[1])
-            elif key_style["name"] == "three+":
+                print(f'{device[0]}{device[1]} rnnoise')
+
+            elif key_style["name"] == "3+":
                 device = key_style["device"]
-                print(f'made device primary ({device[0:2]})')
                 client.primary(device[0], device[1])
-            elif key_style["name"] in ['four', 'four-', 'four+', 'five', 'five-', 'five+']:
+                print(f'{device[0]}{device[1]} primary')
+
+            elif key_style["name"] in ['4', '4-', '4+', '5', '5-', '5+']:
                 device = key_style["device"]
                 out_device = key_style["label"].lower()
-                print(f'toggling connection {device[0:2]} to {out_device}')
                 client.connect(device[0], device[1], out_device[0], out_device[1])
+                print(f'connect {device[0]}{device[1]} to {out_device[0]}{out_device[1]}')
         else:
             for device in get_devices():
                 check_volume_keys(deck, key_style, device)
 
-def get_used_keys():
+def get_unused_keys():
     variables = []
-    for name in ['one', 'two', 'three']:
-        for value in ['up', 'down', 'base']:
-            variables.append(eval(f'{name}_{value}'))
+    if curr_site == 'sub-menu':
+        for key in [key2_base, key2_down, key3_down]:
+            variables.append(key)
     return variables
 
 def get_devices():
@@ -514,10 +548,6 @@ def get_devices():
     for num in a:
         devices.append(eval(f'device_{num}'))
     return devices
-
-def update_key(key):
-    update_key_image(deck, key)
-    print(f'setting key {key} ({curr_site})')
 
 if __name__ == "__main__":
     streamdecks = DeviceManager().enumerate()
@@ -549,36 +579,36 @@ if __name__ == "__main__":
 
         print('setting key variables')
         # I could probably replace this with a loop but I don't really find it necessary
-        global one_up
-        one_up = deck.key_count() - 15
-        global one_down
-        one_down = deck.key_count() - 10
-        global one_base
-        one_base = deck.key_count() - 5
-        global two_up
-        two_up = deck.key_count() - 14
-        global two_down
-        two_down = deck.key_count() - 9
-        global two_base
-        two_base = deck.key_count() - 4
-        global three_up
-        three_up = deck.key_count() - 13
-        global three_down
-        three_down = deck.key_count() - 8
-        global three_base
-        three_base = deck.key_count() - 3
-        global four_up 
-        four_up = deck.key_count() - 12
-        global four_down
-        four_down = deck.key_count() - 7
-        global four_base
-        four_base = deck.key_count() - 2
-        global five_up 
-        five_up = deck.key_count() - 11
-        global five_down
-        five_down = deck.key_count() - 6
-        global five_base
-        five_base = deck.key_count() - 1
+        global key1_up
+        key1_up = deck.key_count() - 15
+        global key1_down
+        key1_down = deck.key_count() - 10
+        global key1_base
+        key1_base = deck.key_count() - 5
+        global key2_up
+        key2_up = deck.key_count() - 14
+        global key2_down
+        key2_down = deck.key_count() - 9
+        global key2_base
+        key2_base = deck.key_count() - 4
+        global key3_up
+        key3_up = deck.key_count() - 13
+        global key3_down
+        key3_down = deck.key_count() - 8
+        global key3_base
+        key3_base = deck.key_count() - 3
+        global key4_up 
+        key4_up = deck.key_count() - 12
+        global key4_down
+        key4_down = deck.key_count() - 7
+        global key4_base
+        key4_base = deck.key_count() - 2
+        global key5_up 
+        key5_up = deck.key_count() - 11
+        global key5_down
+        key5_down = deck.key_count() - 6
+        global key5_base
+        key5_base = deck.key_count() - 1
 
         global curr_site
         curr_site = 'main'
@@ -598,7 +628,6 @@ if __name__ == "__main__":
         deck.set_key_callback(key_change_callback)
 
         print('finished setup')
-        print('---')
         # Wait until all application threads have terminated (for this example,
         # this is when all deck handles are closed).
         for t in threading.enumerate():
@@ -606,5 +635,3 @@ if __name__ == "__main__":
                 t.join()
             except RuntimeError:
                 pass
-
-
