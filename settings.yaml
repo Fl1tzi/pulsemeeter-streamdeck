@@ -70,6 +70,7 @@ round_volume: yes
 # It will return to the base font if not found
 # for this font you need to have nerd-fonts-complete installed
 font: "/usr/share/fonts/nerd-fonts-complete/TTF/JetBrains Mono Medium Nerd Font Complete.ttf"
+font_size: 12
 
 # regular color
 text_color: white
@@ -110,10 +111,3 @@ margins:
     - 0
     - 10
     - 0
-
-# ---
-# UPDATED CONFIG VALUES
-# new values come here automatically.
-# ---
-# version: 2.0 update
-font_size: 12
