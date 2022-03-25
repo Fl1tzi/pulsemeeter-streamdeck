@@ -1,0 +1,119 @@
+
+#  ________  _________  ________  _______   ________  _____ ______           ________  _______   ________  ___  __       
+# |\   ____\|\___   ___\\   __  \|\  ___ \ |\   __  \|\   _ \  _   \        |\   ___ \|\  ___ \ |\   ____\|\  \|\  \     
+# \ \  \___|\|___ \  \_\ \  \|\  \ \   __/|\ \  \|\  \ \  \\\__\ \  \       \ \  \_|\ \ \   __/|\ \  \___|\ \  \/  /|_   
+#  \ \_____  \   \ \  \ \ \   _  _\ \  \_|/_\ \   __  \ \  \\|__| \  \       \ \  \ \\ \ \  \_|/_\ \  \    \ \   ___  \  
+#   \|____|\  \   \ \  \ \ \  \\  \\ \  \_|\ \ \  \ \  \ \  \    \ \  \       \ \  \_\\ \ \  \_|\ \ \  \____\ \  \\ \  \ 
+#     ____\_\  \   \ \__\ \ \__\\ _\\ \_______\ \__\ \__\ \__\    \ \__\       \ \_______\ \_______\ \_______\ \__\\ \__\
+#    |\_________\   \|__|  \|__|\|__|\|_______|\|__|\|__|\|__|     \|__|        \|_______|\|_______|\|_______|\|__| \|__|
+#    \|_________|
+
+# only disable it if you are sure. This checks if Pulsemeeter is running.
+check_running: yes
+
+# ------------------
+# DEVICE CONFIG
+
+device_1:
+  group: hi
+  id: 1
+  label: " mic"
+  # can be mic or speaker
+  type: mic
+
+device_2:
+  group: vi
+  id: 1
+  label: "media"
+  type: speaker
+
+device_3:
+  group: vi
+  id: 2
+  label: "comm"
+  # can be mic or speaker
+  type: mic
+
+device_4:
+  group: a
+  id: 1
+  label: " out"
+  type: speaker
+
+device_5:
+  group: b
+  id: 1
+  label: "  in"
+  type: mic
+
+# show device name on the device page
+show_device: yes
+
+# ------------------
+# GENERAL CONFIGURATION
+
+# the brightness of the stream deck
+brightness: 30
+
+# how much to increase or decrease the volume
+volume_step: 10
+# show the volume step on the volume up and down keys
+show_volume_step: no
+
+# round the volume (only works with 10 or 5 as volume_step)
+round_volume: yes
+
+# ------------------
+# KEY STYLING
+
+# use fc-list to see where fonts are
+# It will return to the base font if not found
+# for this font you need to have nerd-fonts-complete installed
+font: "/usr/share/fonts/nerd-fonts-complete/TTF/JetBrains Mono Medium Nerd Font Complete.ttf"
+
+# regular color
+text_color: white
+
+# use the inactive color if mute is active
+show_mute_state_color: yes
+# color used on inactive fields (eg. when a device is muted)
+inactive_text_color: orange
+
+# font size used on keys
+
+# ---
+
+# show a small icon in front of the volume to show if the device is muted
+show_mute_state_text_icon: yes
+# you can only see these icons using a nerd font
+mute_mic_icons:
+  - ""
+  - ""
+mute_speaker_icons:
+  - "蓼"
+  - "遼"
+
+# this is the seperator used between the volume and your device label (can also be \n)
+label_seperator: "\n"
+
+margins:
+  # these are the margins for the icon of basically every field besides that with the volume on it
+  regular:
+    - 30
+    - 0
+    - 10
+    - 0
+  # these margins only apply to the field where the volumes are
+  # I added it to just use more text on the title
+  title:
+    - 45
+    - 0
+    - 10
+    - 0
+
+# ---
+# UPDATED CONFIG VALUES
+# new values come here automatically.
+# ---
+# version: 2.0 update
+font_size: 12

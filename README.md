@@ -6,10 +6,9 @@ Elgato Streamdeck intergration into pulsemeeter with pulsemeeter socket.
 # installation
 first install the dependencies using:
 
-- `pip install streamdeck`
-- `pip install pulsemeeter`
-- `pip install Pillow`
-- `pip install pyyaml` 
+- `pip3 install streamdeck`
+- `pip3 install pulsemeeter`
+- `pip3 install Pillow` 
 
 Then download all the files:
 
@@ -17,7 +16,7 @@ Then download all the files:
 
 Finally go into the directory `pulsemeeter-streamdeck` and execute it using: 
 
-`python3 main.py`
+`python3 __main__.py`
 
 
 ---
